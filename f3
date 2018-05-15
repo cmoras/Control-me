@@ -1,0 +1,50 @@
+#!/bin/bash
+
+##details to chech for the condition on whether to proceed or not 
+
+#sar idle cpu average
+#a=$(sar -u 1 5  | grep "Average" | awk '{print $NF}');  
+#idlecpu_per=${a%.*};
+idlecpu_per=85;
+#echo $idlecpu_per;
+#load average per second
+#c=$(cat /proc/loadavg  | awk '{print $1}'); 
+#load=${c%.*};
+#echo $load;
+#no of processors
+proc=$(cat /proc/cpuinfo | grep -i processor | wc -l);
+#echo $proc;
+#to retrieve the pid of the script.
+#ppidd=$(jobs -l | grep 199s | awk '{print $2}');
+
+#reading arguments giiven to the script 
+arg0=$1;
+#echo $arg0;
+bash $arg0 2>&1 & echo -e ".......\n";  
+# the script begins here  and continues to run in the backgroud
+arg1=$(which $arg0)
+while true; do
+#	bash $arg0 2>&1 wait;
+	exist=$(jobs -l | awk '{print $2}'); exist_pid=$(ps fauxwwww| grep $arg1 | awk '{print $2}');
+	echo "exist :" $exist; echo "exist_pid :" $exist_pid;ps fauxwwww | grep -C3 $exist;
+	if [[ ! -z $exist_pid ]]; then
+		echo "Continue ....."; sleep 5s;
+		#a=$(sar -u 1 5  | grep "Average" | awk '{print $NF}'); 
+		#idlecpu_per=${a%.*};
+		#idlecpu_per=85;
+		c=$(cat /proc/loadavg  | awk '{print $1}');
+		load=${c%.*};
+		echo "idlecpu_per :" $idlecpu_per; echo "load :" $load;  echo "proc :" $proc;
+		echo "if odle -gt 70 and load -lt proc then good else bad, if good then idlecpu is 10.. should go bad next";
+		if [[ $idlecpu_per -gt 70 && $load -lt $proc ]]; then
+			echo "we are good";
+			idlecpu_per=10;
+		else
+			echo "bad news";
+		fi
+	else
+		echo "Exiting......";break;
+		echo "if -9 is recieved then  we will see Killed";
+		echo "if -15 is recived  then we will see terminated";
+	fi
+done
