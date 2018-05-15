@@ -1,0 +1,28 @@
+#!/bin/bash
+arg0=$1;
+proc=$(cat /proc/cpuinfo | grep -i processor | wc -l);
+bash $arg0 2>&1 & pid=$! 
+while true; 
+do
+	ps -p $pid  > /dev/null;exist=$?;
+	echo "exist :" $exist;
+	if [[ $exist == 0 ]]; then
+		echo "Continue ....."; sleep 5s;
+		echo "=====================================";
+		a=$(sar -u 1 5  | grep "Average" | awk '{print $NF}');
+		idlecpu_per=${a%.*};
+		c=$(cat /proc/loadavg  | awk '{print $1}');
+		load=${c%.*};
+		if [[ $idlecpu_per -gt 70 && $load -lt $proc ]]; then
+			echo "we are good";
+			kill -CONT $pid 2>/dev/null;
+		else
+			echo "bad news";
+			echo $pid;
+			kill -TSTP $pid 2>/dev/null;
+
+		fi
+	else
+		echo "Exiting......";break;
+	fi
+done
